@@ -6,12 +6,11 @@ from django.contrib.auth.password_validation import validate_password # Optional
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
-    password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True) # Optional: Add password validation
 
     class Meta:
         model = User
         # Fields required for registration
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
+        fields = ('username', 'password', 'email', 'first_name', 'last_name')
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -22,10 +21,18 @@ class RegisterSerializer(serializers.ModelSerializer):
             'last_name': {'required': False}, # Make optional
         }
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Passwords do not match."})
-        return attrs
+    def validate_email(self, value):
+        """
+        Check that the email address is unique amongst users.
+        Uses case-insensitive check.
+        """
+        # Normalize email to lowercase for case-insensitive comparison
+        normalized_email = value.lower()
+        # Check if a user with this email already exists (case-insensitive)
+        if User.objects.filter(email__iexact=normalized_email).exists():
+            raise serializers.ValidationError("A user with that email address already exists.")
+        # Return the potentially normalized value to be used in validated_data
+        return normalized_email
     
     def create(self, validated_data):
         # Use create_user to handle password hashing automatically

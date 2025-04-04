@@ -1,35 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react'; // Make sure React is imported if not already
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './App.css'; // Or your main CSS file
+import RegisterPage from './pages/RegisterPage';
+
+
+// We will create these components soon:
+// import LoginPage from './pages/LoginPage';
+// import RegisterPage from './pages/RegisterPage';
+// import HomePage from './pages/HomePage';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      {/* You might add a persistent Navbar or Layout component here later */}
+      <h1>Family Hub</h1> {/* Simple title for now */}
+      <Routes>
+        {/* Define routes - using simple divs as placeholders for now */}
+        <Route path="/" element={<div>Home Page Placeholder (Visible when logged in)</div>} />
+        <Route path="/login" element={<div>Login Page Placeholder</div>} />
+        <Route path="/register" element={<RegisterPage />} />
+        {/* Add other routes later as needed */}
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
