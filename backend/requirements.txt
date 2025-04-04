@@ -12,4 +12,5 @@ psycopg2-binary>=2.9,<3.0  # For PostgreSQL connection
 django-environ>=0.11,<0.12 # For handling .env variables
 celery>=5.3,<5.4
 redis>=5.0,<5.1
+djangorestframework-simplejwt>=5.0,<6.0
 # Add other dependencies like djangorestframework-simplejwt (for auth), django-storages (for S3), etc. as needed
