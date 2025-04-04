@@ -1,0 +1,15 @@
+# backend/requirements.txt
+# This file is used to install the backend dependencies.
+# It is recommended to use a virtual environment for Python projects.
+# You can create a virtual environment using the following command:
+# python -m venv venv
+# Windows: venv\Scripts\activate
+# After creating the virtual environment, activate it using:
+
+Django>=4.2,<5.0
+djangorestframework>=3.14,<3.15
+psycopg2-binary>=2.9,<3.0  # For PostgreSQL connection
+django-environ>=0.11,<0.12 # For handling .env variables
+celery>=5.3,<5.4
+redis>=5.0,<5.1
+# Add other dependencies like djangorestframework-simplejwt (for auth), django-storages (for S3), etc. as needed

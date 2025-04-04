@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Docker cache / build artifacts (if any locally)
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*build*/
+*dist*/
+
+# IDE / OS files
+.vscode/
+.idea/
+*.DS_Store

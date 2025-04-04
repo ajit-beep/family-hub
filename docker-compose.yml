@@ -1,0 +1,81 @@
+# docker-compose.yml
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      # These will be read from the .env file
+      - POSTGRES_DB=${SQL_DATABASE}
+      - POSTGRES_USER=${SQL_USER}
+      - POSTGRES_PASSWORD=${SQL_PASSWORD}
+    ports:
+      - "5432:5432" # Expose port if you need to connect directly from host (e.g., with DBeaver)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER} -d ${SQL_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379" # Expose port if needed from host
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app # Mount local code into container
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env # Pass environment variables from .env file
+    depends_on:
+      db:
+        condition: service_healthy # Wait for DB to be ready
+      redis:
+        condition: service_healthy # Wait for Redis to be ready
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      # Mount local code. Exclude node_modules for performance.
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      # Map host port 3000 to container port 5173 (Vite default)
+      - "8081:5173"
+    environment:
+      # Tell React app where the backend API is (adjust URL if needed)
+      - VITE_API_URL=http://localhost:8000/api
+      # Ensure file changes trigger rebuilds (useful with Docker volumes)
+      - WATCHPACK_POLLING=true # Or CHOKIDAR_USEPOLLING=true for CRA
+    depends_on:
+      - backend # Optional: Wait for backend, though frontend often starts faster
+
+  # Optional: Celery worker (uncomment when you implement background tasks)
+  # celery_worker:
+  #   build: ./backend
+  #   command: celery -A core.celery worker --loglevel=info
+  #   volumes:
+  #     - ./backend:/app
+  #   env_file:
+  #     - ./.env
+  #   depends_on:
+  #     - redis
+  #     - db
+
+volumes:
+  postgres_data:
+  redis_data:
