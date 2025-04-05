@@ -115,6 +115,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081", # React frontend
     # Add other origins if needed (e.g., production frontend URL later)
 ]
+CORS_ALLOW_CREDENTIALS = True # Allow cookies to be sent with CORS requests
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -169,6 +170,15 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+
+    # --- Add Cookie Settings ---
+    "AUTH_COOKIE_ACCESS": "access_token",   # Name of the cookie to potentially store access token (optional)
+    "AUTH_COOKIE_REFRESH": "refresh_token", # Name of the cookie to store refresh token
+    "AUTH_COOKIE_SECURE": not DEBUG,        # Sets Secure flag based on DEBUG automatically
+    "AUTH_COOKIE_HTTP_ONLY": True,          # Refresh token cookie MUST be HttpOnly
+    "AUTH_COOKIE_PATH": "/",                # Cookie path
+    "AUTH_COOKIE_SAMESITE": "Lax",          # Or 'Strict'
+    # --- End Cookie Settings ---
 
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",

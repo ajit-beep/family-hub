@@ -17,18 +17,27 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-# Import the simplejwt views
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
+
+from users.views import (
+    CookieTokenObtainPairView,
+    CookieTokenRefreshView,
+    LogoutView,
+    RegisterView,
 )
+
+# # Import the simplejwt views
+# from rest_framework_simplejwt.views import (
+#     TokenObtainPairView,
+#     TokenRefreshView,
+# )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     # JWT authentication URLs
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # POST username/password here to get tokens
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # POST refresh token here to get new access token
+    path('api/token/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'), # POST username/password here to get tokens
+    path('api/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'), # POST refresh token here to get new access token
+    path('api/token/logout/', LogoutView.as_view(), name='token_logout'), # New Logout URL
 
     # User related endpoints (Registration, etc.)
     path('api/users/', include('users.urls')), # Include URLs from the users app
