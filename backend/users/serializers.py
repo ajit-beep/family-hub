@@ -44,3 +44,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', '')
         )
         return user
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for displaying User model details.
+    Marks key identifiers as read-only.
+    """
+    class Meta:
+        model = User
+        # Fields to include when retrieving user details via the '/api/users/me/' endpoint
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined') # Added date_joined as example
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'username': {'read_only': True},
+            'date_joined': {'read_only': True},
+            # Email could potentially be updated via a profile endpoint, so not strictly read-only here,
+            # unless you want to prevent modification via this serializer entirely.
+            # 'email': {'read_only': True}
+        }

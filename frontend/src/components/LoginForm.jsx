@@ -1,11 +1,16 @@
 // frontend/src/components/LoginForm.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance'; // <-- Import the configured instance
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+
+  const { login } = useAuth(); // Get login function from context
+  const navigate = useNavigate(); // Get navigate function from react-router
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -21,26 +26,18 @@ function LoginForm() {
     try {
       // Make POST request to the backend token endpoint
       // Ensure this URL matches your backend setup
-      const response = await axios.post('http://localhost:8000/api/token/', payload);
+      const response = await axiosInstance.post('/api/token/', payload);
 
-      // Handle success (for now, just log tokens)
-      console.log('Login successful:', response.data);
-      const { access, refresh } = response.data;
-      console.log('Access Token:', access);
-      console.log('Refresh Token:', refresh);
+      // Call context login function with ONLY the access token
+      login(response.data.access); // Pass only access token
 
-      // TODO: Store tokens (e.g., localStorage)
-      // TODO: Update application auth state (e.g., using Context)
-      // TODO: Redirect user (e.g., to homepage)
-
-      alert('Login Successful! Tokens logged to console.'); // Temporary feedback
+      navigate('/'); // Redirect to homepage
 
     } catch (err) {
       // Handle errors
       console.error('Login error:', err);
       if (err.response && err.response.data) {
-         // Often login errors return { "detail": "Error message" }
-        const errorMessage = err.response.data.detail || 'Invalid credentials or server error.';
+         const errorMessage = err.response.data.detail || 'Invalid credentials or server error.';
          setError(`Login failed: ${errorMessage}`);
       } else if (err.request) {
         setError('Login failed: No response from server.');

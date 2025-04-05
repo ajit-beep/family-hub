@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from .serializers import RegisterSerializer
+from .serializers import RegisterSerializer, UserSerializer
 
 # Import SimpleJWT views and utils
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -112,3 +112,17 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class UserDetailView(generics.RetrieveAPIView):
+    """
+    API endpoint that retrieves and returns details for the
+    currently authenticated user making the request.
+    Requires authentication.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated] # Ensures only logged-in users can access
+
+    def get_object(self):
+        # Overrides the default lookup behavior (which uses URL pk)
+        # to simply return the user associated with the request.
+        return self.request.user
