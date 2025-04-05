@@ -4,87 +4,111 @@ import axiosInstance from '../api/axiosInstance'; // Import the configured axios
 
 // Simple reference holder accessible outside React components
 export const authTokensRef = {
-    accessToken: localStorage.getItem('accessTokenRef') // Attempt to load initial value if stored (optional)
+    accessToken: null
 };
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Store accessToken in state only, initialize as null
-  const [accessToken, setAccessToken] = useState(null);
-  // We no longer manage refreshToken in React state - it's in the cookie
-  // const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Initial state is not authenticated
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+    // Store accessToken in state only, initialize as null
+    const [accessToken, setAccessToken] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Initial state is not authenticated
+    const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  // Check if user is logged in (has valid refresh token) on initial load
-  // We might need a '/api/users/me/' endpoint later or try refreshing immediately
-  useEffect(() => {
-    // For now, just assume not logged in on load until refresh logic is added
-    // Or, try a silent refresh maybe? Let's keep it simple for now.
-    // We know if accessToken is in state, they logged in THIS session.
-    setIsAuthenticated(!!accessToken);
-    // Persist token ref for potential use across refreshes (optional, state is primary)
-    if (accessToken) {
-        localStorage.setItem('accessTokenRef', accessToken);
-    } else {
-        localStorage.removeItem('accessTokenRef');
-    }
-    setIsLoading(false);
-  }, [accessToken]);
+    // Check if user is logged in (has valid refresh token) on initial load
+    // We might need a '/api/users/me/' endpoint later or try refreshing immediately
+    const handleNewAccessToken = (newAccessToken) => {
+        setAccessToken(newAccessToken);
+        authTokensRef.accessToken = newAccessToken; // Update ref for interceptor
+        setIsAuthenticated(!!newAccessToken); // Update auth status based on token presence
+        console.log("Access token updated in state and ref.");
+    };
+
+    useEffect(() => {
+        console.log("AuthProvider mounted. Attempting silent refresh...");
+        setIsLoading(true);
+
+        const attemptRefresh = async () => {
+            try {
+                // AxiosInstance includes withCredentials: true, so cookie is sent
+                const response = await axiosInstance.post('/api/token/refresh/');
+                // If refresh is successful, backend sends back a new access token
+                handleNewAccessToken(response.data.access);
+                console.log("Silent refresh successful.");
+            } catch (error) {
+                // If refresh fails (e.g., expired/invalid refresh cookie), user is logged out
+                console.log("Silent refresh failed or no valid refresh token found.", error.response?.data || error.message);
+                // Ensure state reflects logged-out status
+                handleNewAccessToken(null); // Clear any potential stale token
+            } finally {
+                // Regardless of success/failure, initial auth check is complete
+                setIsLoading(false);
+                console.log("Initial auth check complete.");
+            }
+        };
+
+        attemptRefresh();
+    }, []);
 
 
-  // Login function - only receives/stores access token now
-  const login = (newAccessToken) => {
-    setAccessToken(newAccessToken);
-    // localStorage.setItem('accessToken', newAccessToken); // REMOVE localStorage
-    // localStorage.setItem('refreshToken', newRefreshToken); // REMOVE localStorage
-    // setRefreshToken(newRefreshToken); // REMOVE refreshToken state
-    // setIsAuthenticated(true); // Handled by useEffect
-    authTokensRef.accessToken = newAccessToken; // <-- Update the exported ref
-    console.log("Logged in, access token stored in state.");
-  };
+    // Login function - now just focuses on calling the token endpoint and updating state
+    const login = async (username, password) => { // Modified to take credentials
+        // Clear previous state just in case
+        handleNewAccessToken(null);
+        setIsLoading(true); // Indicate loading during login attempt
+        try {
+            const payload = { username, password };
+            const response = await axiosInstance.post('/api/token/', payload);
+            handleNewAccessToken(response.data.access); // Use handler
+            setIsLoading(false);
+            return true; // Indicate success
+        } catch (error) {
+            console.error("Login API call failed:", error);
+            setIsLoading(false);
+            throw error; // Re-throw error for the form to handle
+        }
+    };
 
-  // Logout function - needs to call backend to clear cookie
-  const logout = async () => {
-    console.log("Logging out...");
-    const tokenToClear = authTokensRef.accessToken; // Get token before clearing state
-    setAccessToken(null); // Clear state first
-    authTokensRef.accessToken = null; // <-- Clear the exported ref
-    localStorage.removeItem('accessTokenRef'); // Clear ref persistence
-    try {
-      // Call the backend logout endpoint to clear the HttpOnly cookie
-      await axiosInstance.post('/api/token/logout/');
-    } catch (logoutErr) {
-        console.error("Logout API call failed:", logoutErr);
-        // Still clear frontend state even if backend call fails
-    } finally {
-        // Clear frontend state
-        setAccessToken(null);
-        // setIsAuthenticated(false); // Handled by useEffect
-        console.log("Frontend logged out, access token cleared.");
-        // Redirect or update UI as needed
-        // window.location.href = '/login'; // Simple redirect
-    }
-  };
+    // Logout function
+    const logout = async () => {
+        console.log("Logging out...");
+        // const tokenToClear = authTokensRef.accessToken;
+        // handleNewAccessToken(null); // Clear frontend state immediately
 
-  const value = {
-    accessToken,
-    isAuthenticated,
-    isLoading, // Provide loading state
-    login,
-    logout,
-  };
+        try {
+            // Call backend logout endpoint FIRST.
+            // The Axios interceptor will read the current accessToken from authTokensRef
+            // and add the 'Authorization: Bearer ...' header.
 
-  // Render children only after initial loading check is done
-  return <AuthContext.Provider value={value}>{!isLoading && children}</AuthContext.Provider>;
+            await axiosInstance.post('/api/token/logout/');
+            console.log("Backend logout successful (cookie cleared).");
+        } catch (logoutErr) {
+            console.error("Logout API call failed:", logoutErr);
+        } finally {
+            handleNewAccessToken(null); 
+            console.log("Frontend logged out completely.");
+            // Redirect if needed (can also be done in the component calling logout)
+            // window.location.replace('/login');
+        }
+    };
+
+    const value = {
+        accessToken,
+        isAuthenticated,
+        isLoading, // Provide loading state
+        login,
+        logout,
+    };
+
+    // Render children only after initial loading check is done
+    return <AuthContext.Provider value={value}>{!isLoading && children}</AuthContext.Provider>;
 };
 
 // Custom hook (no changes needed here)
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };

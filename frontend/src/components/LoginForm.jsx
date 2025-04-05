@@ -26,12 +26,8 @@ function LoginForm() {
     try {
       // Make POST request to the backend token endpoint
       // Ensure this URL matches your backend setup
-      const response = await axiosInstance.post('/api/token/', payload);
-
-      // Call context login function with ONLY the access token
-      login(response.data.access); // Pass only access token
-
-      navigate('/'); // Redirect to homepage
+      await login(username, password); // Use the modified login function
+      navigate('/'); // Redirect only on success
 
     } catch (err) {
       // Handle errors

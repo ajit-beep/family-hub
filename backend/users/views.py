@@ -12,6 +12,8 @@ from .serializers import RegisterSerializer, UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.settings import api_settings as simple_jwt_settings
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer # <-- Import Serializer
+
 
 class RegisterView(generics.CreateAPIView):
     """
@@ -63,34 +65,37 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 # --- Subclassed Refresh View ---
 class CookieTokenRefreshView(TokenRefreshView):
-     def finalize_response(self, request, response, *args, **kwargs):
-        if response.status_code == 200 and 'access' in response.data:
-            # Access token is already in response.data from parent class
-            # If token rotation is enabled, a new refresh token might be in the cookies
-            # SimpleJWT *should* handle reading the refresh token from the cookie by default
-            # if it's not in the request body. Let's verify by checking if a new refresh
-            # token needs to be set (e.g., if rotation is enabled and successful)
-            # NOTE: SimpleJWT doesn't explicitly put the *new* rotated refresh token
-            # in the response data by default. Handling rotation often requires
-            # more custom logic or specific serializers. For now, assume no rotation
-            # or handle setting the *same* refresh cookie again if needed.
+    serializer_class = TokenRefreshSerializer # Specify the serializer
 
-            # Example: If you customized the serializer to include the new refresh token:
-            # if 'refresh' in response.data:
-            #    refresh_token = response.data['refresh']
-            #    del response.data['refresh'] # Don't send back in body
-            #    response.set_cookie(...) # Set cookie as in login view
+    def post(self, request, *args, **kwargs):
+        # Extract refresh token from HttpOnly cookie
+        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'))
 
-            # For simplicity now, we assume the refresh cookie lifespan is managed correctly
-            # and just return the new access token in the body.
-            pass # No cookie setting needed here unless refresh token rotation is implemented
+        if not refresh_token:
+            return Response({"detail": "Refresh token cookie not found."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Handle potential errors if the refresh cookie was invalid/expired
-        elif response.status_code == 401:
-             # Example: Clear the potentially invalid cookie on failure
-             response.delete_cookie(settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'))
+        # Pass the refresh token from cookie into the serializer's data
+        serializer = self.get_serializer(data={'refresh': refresh_token})
 
-        return super().finalize_response(request, response, *args, **kwargs)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            # Catch specific token errors (like blacklisted or invalid)
+            raise InvalidToken(e.args[0])
+
+        # If valid, serializer.validated_data will contain the new 'access' token
+        response = Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+        # Optional: If using token rotation, the serializer might provide a new refresh token
+        # You would need to handle setting that new cookie here if rotation is enabled.
+        # if 'refresh' in serializer.validated_data: # Check if serializer provided a new one
+        #     new_refresh = serializer.validated_data['refresh']
+        #     response.set_cookie(
+        #           key=settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
+        #           value=new_refresh, ...) # Set new refresh cookie
+
+        return response # Return response containing the new access token in body
+
 
 # --- New Logout View ---
 class LogoutView(APIView):
