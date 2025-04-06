@@ -2,7 +2,10 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password # Optional: Add password validation
+from django.contrib.auth import get_user_model
+from .models import Family, UserProfile
 
+User = get_user_model() # Best practice to get the User mode
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
@@ -62,3 +65,40 @@ class UserSerializer(serializers.ModelSerializer):
             # unless you want to prevent modification via this serializer entirely.
             # 'email': {'read_only': True}
         }
+
+class FamilySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Family model. Handles creation (requires 'name')
+    and representation.
+    """
+    class Meta:
+        model = Family
+        fields = ('id', 'name', 'created_at') # Fields to include in response
+        read_only_fields = ('id', 'created_at') # These are set automatically
+
+    def validate_name(self, value):
+        # Example basic validation: ensure name is not just whitespace
+        if not value or value.strip() == "":
+            raise serializers.ValidationError("Family name cannot be empty.")
+        # You could add more validation here (e.g., uniqueness if required)
+        return value
+
+# --- New Serializer for Adding Members ---
+class AddMemberSerializer(serializers.Serializer):
+    """
+    Serializer for validating the input when adding a member to a family.
+    Expects the 'username' of the user to be added.
+    """
+    username = serializers.CharField(
+        max_length=150, # Standard max_length for username
+        required=True,
+        help_text="Username of the user to add to the family."
+    )
+
+    # You could add validation here to check if user exists,
+    # but often this check is better handled in the view logic
+    # after permission checks have passed.
+    # def validate_username(self, value):
+    #     if not User.objects.filter(username=value).exists():
+    #         raise serializers.ValidationError("User with this username does not exist.")
+    #     return value
