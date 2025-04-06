@@ -1,5 +1,5 @@
 // frontend/src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import axiosInstance from '../api/axiosInstance'; // Import the configured axios instance
 
 // Simple reference holder accessible outside React components
@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
     const [accessToken, setAccessToken] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false); // Initial state is not authenticated
     const [isLoading, setIsLoading] = useState(true); // Add loading state
+    const didAttemptRefreshRef = useRef(false);
 
     // Check if user is logged in (has valid refresh token) on initial load
     // We might need a '/api/users/me/' endpoint later or try refreshing immediately
@@ -25,29 +26,54 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        console.log("AuthProvider mounted. Attempting silent refresh...");
+        if (didAttemptRefreshRef.current) {
+            console.log("Skipping duplicate refresh attempt due to StrictMode or re-render.");
+            // If skipping, ensure loading is eventually false
+            if (isLoading) setIsLoading(false);
+            return; // Exit early on second run
+        }
+        // Mark that we are attempting the refresh for this component lifecycle
+        didAttemptRefreshRef.current = true;
+        console.log("AuthProvider mounted. Attempting silent refresh (first valid run)...");
+        // Flag to track if the component is still mounted when async calls finish
         setIsLoading(true);
-
-        const attemptRefresh = async () => {
+        let isStillMounted = true;
+        console.log("AuthProvider Effect Setup Ran"); // Log setup
+    
+        const attemptRefresh = async () => {            
+    
+            console.log("Running attemptRefresh logic...");
+            //setIsLoading(true); // Set loading right before the call
+    
             try {
-                // AxiosInstance includes withCredentials: true, so cookie is sent
+                console.log("Calling POST /api/token/refresh/");
                 const response = await axiosInstance.post('/api/token/refresh/');
-                // If refresh is successful, backend sends back a new access token
+    
+                // Only update state if the component is still mounted
                 handleNewAccessToken(response.data.access);
-                console.log("Silent refresh successful.");
+                console.log("Silent refresh successful. State updated.");
             } catch (error) {
-                // If refresh fails (e.g., expired/invalid refresh cookie), user is logged out
-                console.log("Silent refresh failed or no valid refresh token found.", error.response?.data || error.message);
-                // Ensure state reflects logged-out status
-                handleNewAccessToken(null); // Clear any potential stale token
+                 // Only update state if the component is still mounted
+                 
+                console.log("Silent refresh failed...", error.response?.data || error.message);
+                handleNewAccessToken(null); // Clear token state on failure
+                
             } finally {
-                // Regardless of success/failure, initial auth check is complete
                 setIsLoading(false);
-                console.log("Initial auth check complete.");
+                console.log("Initial auth check attempt complete.");
+                // Log the final auth state for verification
+                // Note: state updates might not be reflected immediately here due to async nature
+                // console.log(`Auth check finished. Current context state: isLoading=${isLoading}, isAuthenticated=${isAuthenticated}`);
             }
         };
+     
 
         attemptRefresh();
+        // Cleanup function: runs when component unmounts OR before effect re-runs in StrictMode
+        return () => {
+            console.log("AuthProvider Effect Cleanup Ran");
+            isStillMounted = false; // Set flag so async callbacks know component unmounted
+        };
     }, []);
 
 
