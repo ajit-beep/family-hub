@@ -41,6 +41,7 @@ urlpatterns = [
 
     # User related endpoints (Registration, etc.)
     path('api/users/', include('users.urls')), # Include URLs from the users app
+    path('api/records/', include('records.urls')), # Include URLs from the records app
 
     # Add paths for your custom API endpoints later, possibly using include
     # path('api/', include('api.urls')), # Example for later

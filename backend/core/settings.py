@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     # Your apps (add later)
     'users.apps.UsersConfig',
+    'records.apps.RecordsConfig',
     # 'api.apps.ApiConfig',
 ]
 
@@ -133,6 +134,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# Define where user-uploaded files (Media) will be stored and accessed
+MEDIA_URL = '/media/' # URL prefix for media files
+MEDIA_ROOT = BASE_DIR / 'media' # Absolute filesystem path to the directory for media files
+                                # BASE_DIR should already be defined near top of settings.py
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
