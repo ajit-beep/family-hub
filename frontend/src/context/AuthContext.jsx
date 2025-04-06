@@ -11,10 +11,24 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     // Store accessToken in state only, initialize as null
+    const [user, setUser] = useState(null); // To store the whole user object from /me
+    const [familyId, setFamilyId] = useState(null);
+    const [userRole, setUserRole] = useState(null); 
     const [accessToken, setAccessToken] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false); // Initial state is not authenticated
     const [isLoading, setIsLoading] = useState(true); // Add loading state
     const didAttemptRefreshRef = useRef(false);
+
+    // --- Helper to clear all auth state ---
+    const handleLogoutCleanup = () => {
+        setAccessToken(null);
+        authTokensRef.accessToken = null;
+        setIsAuthenticated(false);
+        setUser(null);
+        setFamilyId(null);
+        setUserRole(null);
+        console.log("Auth state cleared.");
+    };
 
     // Check if user is logged in (has valid refresh token) on initial load
     // We might need a '/api/users/me/' endpoint later or try refreshing immediately
@@ -23,6 +37,39 @@ export const AuthProvider = ({ children }) => {
         authTokensRef.accessToken = newAccessToken; // Update ref for interceptor
         setIsAuthenticated(!!newAccessToken); // Update auth status based on token presence
         console.log("Access token updated in state and ref.");
+    };
+
+    // --- New: Function to fetch user details ---
+    const fetchUserDetails = async () => {
+        console.log("Attempting to fetch user details (/api/users/me/)...");
+        try {
+            // Interceptor adds token
+            const response = await axiosInstance.get('/api/users/me/');
+            const userData = response.data;
+            if (userData) {
+                setUser(userData); // Store full user object
+                if (userData.profile) {
+                    setFamilyId(userData.profile.family); // Store family ID (can be null)
+                    setUserRole(userData.profile.role);   // Store role
+                    console.log("User details set in context:", { user: userData.username, familyId: userData.profile.family, userRole: userData.profile.role });
+                } else {
+                    setFamilyId(null);
+                    setUserRole(null);
+                    console.warn("User profile data missing in /me response!");
+                }
+                // Ensure authenticated is true if user data is successfully fetched
+                if(!isAuthenticated) setIsAuthenticated(true);
+            } else {
+                console.warn("/me endpoint returned no data.");
+                handleLogoutCleanup(); // Clear state if /me fails badly
+            }
+        } catch (error) {
+            console.error("Failed to fetch user details:", error.response?.data || error.message);
+            // If /me fails (e.g., 401 Unauthorized), token is likely bad, clear state
+            handleLogoutCleanup();
+        }
+        // Note: We set isLoading=false in the useEffect/login functions
+        // AFTER fetchUserDetails completes or fails.
     };
 
     useEffect(() => {
@@ -52,12 +99,15 @@ export const AuthProvider = ({ children }) => {
                 // Only update state if the component is still mounted
                 handleNewAccessToken(response.data.access);
                 console.log("Silent refresh successful. State updated.");
+                // --- If refresh worked, THEN fetch user details ---
+                await fetchUserDetails(); // Fetch details using the new token
+                // --- End fetch user details ---
             } catch (error) {
                  // Only update state if the component is still mounted
                  
                 console.log("Silent refresh failed...", error.response?.data || error.message);
                 handleNewAccessToken(null); // Clear token state on failure
-                
+                handleLogoutCleanup();
             } finally {
                 setIsLoading(false);
                 console.log("Initial auth check attempt complete.");
@@ -80,16 +130,19 @@ export const AuthProvider = ({ children }) => {
     // Login function - now just focuses on calling the token endpoint and updating state
     const login = async (username, password) => { // Modified to take credentials
         // Clear previous state just in case
-        handleNewAccessToken(null);
+        handleLogoutCleanup(); 
         setIsLoading(true); // Indicate loading during login attempt
         try {
             const payload = { username, password };
             const response = await axiosInstance.post('/api/token/', payload);
             handleNewAccessToken(response.data.access); // Use handler
+            // --- If login worked, THEN fetch user details ---
+            await fetchUserDetails(); // Fetch details using the new token
             setIsLoading(false);
             return true; // Indicate success
         } catch (error) {
             console.error("Login API call failed:", error);
+            handleLogoutCleanup(); // Clear state on login failure
             setIsLoading(false);
             throw error; // Re-throw error for the form to handle
         }
@@ -100,6 +153,7 @@ export const AuthProvider = ({ children }) => {
         console.log("Logging out...");
         // const tokenToClear = authTokensRef.accessToken;
         // handleNewAccessToken(null); // Clear frontend state immediately
+        handleLogoutCleanup();
 
         try {
             // Call backend logout endpoint FIRST.
@@ -122,8 +176,12 @@ export const AuthProvider = ({ children }) => {
         accessToken,
         isAuthenticated,
         isLoading, // Provide loading state
+        user,       // <-- Provide user
+        familyId,   // <-- Provide familyId
+        userRole,   // <-- Provide userRole
         login,
         logout,
+        fetchUserDetails // <-- Optionally expose refetch function
     };
 
     // Render children only after initial loading check is done

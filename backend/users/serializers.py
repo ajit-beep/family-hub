@@ -48,15 +48,32 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+# --- NEW: Simple serializer for nested profile data ---
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for nested display of profile details within UserSerializer.
+    Shows only family ID and role for the /me endpoint.
+    """
+    class Meta:
+        model = UserProfile
+        fields = ('family', 'role') # Include the fields frontend needs
+
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializer for displaying User model details.
-    Marks key identifiers as read-only.
+    Serializer for displaying User model details, now including
+    nested profile information (family ID and role).
     """
+
+    profile = UserProfileSerializer(read_only=True) # Nested serializer for profile data
     class Meta:
         model = User
         # Fields to include when retrieving user details via the '/api/users/me/' endpoint
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined') # Added date_joined as example
+        fields = (
+            'id','username',
+            'email','first_name',
+            'last_name','date_joined',
+            'profile'
+        ) # Added date_joined as example
         extra_kwargs = {
             'id': {'read_only': True},
             'username': {'read_only': True},
