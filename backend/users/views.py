@@ -16,6 +16,8 @@ from rest_framework_simplejwt.settings import api_settings as simple_jwt_setting
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer # <-- Import Serializer
 
+from django.shortcuts import get_object_or_404
+
 
 class RegisterView(generics.CreateAPIView):
     """
@@ -257,3 +259,56 @@ class AddFamilyMemberView(APIView):
         else:
             # Input data was invalid
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# --- New View for Removing Members ---
+class RemoveFamilyMemberView(APIView):
+    """
+    API endpoint for removing a member from the requesting admin's family.
+    Expects a DELETE request to /api/users/families/members/<user_id>/
+    Requires authentication and the requesting user must be a family admin.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsFamilyAdmin]
+
+    def delete(self, request, user_id, *args, **kwargs):
+        """
+        Handles the DELETE request to remove a user from the family.
+        The user_id to remove is passed in the URL.
+        """
+        admin_user = request.user
+
+        # 1. Prevent admin from removing themselves via this endpoint
+        if admin_user.id == user_id:
+            return Response(
+                {"detail": "You cannot remove yourself using this endpoint."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Find the target user to remove
+        target_user = get_object_or_404(User, id=user_id)
+
+        # 3. Check if the target user has a profile (should exist, but check defensively)
+        if not hasattr(target_user, 'profile'):
+            # This indicates a data inconsistency if it happens now
+            return Response(
+                {"detail": f"User '{target_user.username}' does not have a profile."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        target_profile = target_user.profile
+        admin_family = admin_user.profile.family # Assured by IsFamilyAdmin permission
+
+        # 4. Verify the target user is actually in the admin's family
+        if target_profile.family != admin_family:
+            return Response(
+                {"detail": f"User '{target_user.username}' is not a member of your family."},
+                status=status.HTTP_400_BAD_REQUEST # Or 404 Not Found in this context
+            )
+
+        # 5. Perform the removal by unlinking the family and resetting role
+        target_profile.family = None
+        target_profile.role = UserProfile.ROLE_MEMBER # Reset role to default
+        target_profile.save()
+
+        # 6. Return success response (204 No Content is standard for DELETE)
+        return Response(status=status.HTTP_204_NO_CONTENT)

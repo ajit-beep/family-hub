@@ -5,7 +5,8 @@ from .views import (
     UserDetailView,
     FamilyCreateView,
     FamilyMemberListView,
-    AddFamilyMemberView
+    AddFamilyMemberView,
+    RemoveFamilyMemberView
 )
 
 urlpatterns = [
@@ -14,5 +15,6 @@ urlpatterns = [
     path('families/', FamilyCreateView.as_view(), name='family-create'),  # Example for family creation (POST)
     path('families/members/', FamilyMemberListView.as_view(), name='family-member-list'),  # Example for family member list (GET)
     path('families/add-member/', AddFamilyMemberView.as_view(), name='family-member-add'), # POST to add member
+    path('families/members/<int:user_id>/', RemoveFamilyMemberView.as_view(), name='family-member-remove'), # DELETE
     # Add other user-related URLs here later (e.g., profile view)
 ]
