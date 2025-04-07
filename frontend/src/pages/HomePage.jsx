@@ -70,7 +70,7 @@ function HomePage() {
               <li><Link to="/documents">Manage Documents</Link> (WIP)</li>
               <li><Link to="/investments">Track Investments</Link> (WIP)</li>
               <li><Link to="/photos">View Photos</Link> (WIP)</li>
-              <li><Link to="/members">View Family Members</Link> (WIP)</li>
+              <li><Link to="/members">View Family Members</Link></li>
             </ul>
 
             {/* --- Admin Specific Controls Placeholder --- */}

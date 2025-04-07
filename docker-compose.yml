@@ -49,10 +49,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    volumes:
-      # Mount local code. Exclude node_modules for performance.
-      - ./frontend:/app
-      - /app/node_modules
+    #volumes:
+      # # Mount local code. Exclude node_modules for performance.
+      # - ./frontend:/app
+      # - /app/node_modules
     ports:
       # Map host port 3000 to container port 5173 (Vite default)
       - "8081:5173"

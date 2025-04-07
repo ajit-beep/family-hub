@@ -4,6 +4,7 @@ import './App.css'; // Or your main CSS file
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
+import FamilyMembersPage from './pages/FamilyMembersPage';
 import { useAuth } from './context/AuthContext';
 
 
@@ -40,6 +41,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/members" element={<FamilyMembersPage />} />
       </Routes>
     </BrowserRouter>
   );
