@@ -5,6 +5,7 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import FamilyMembersPage from './pages/FamilyMembersPage';
+import DocumentManagementPage from './pages/DocumentManagementPage'; // Import your pages
 import { useAuth } from './context/AuthContext';
 
 
@@ -42,6 +43,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/members" element={<FamilyMembersPage />} />
+        <Route path="/documents" element={<DocumentManagementPage />} />
       </Routes>
     </BrowserRouter>
   );

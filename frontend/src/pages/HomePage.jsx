@@ -67,22 +67,11 @@ function HomePage() {
             <h5>Quick Access:</h5>
             <ul>
               {/* Replace with actual Links to components/routes */}
-              <li><Link to="/documents">Manage Documents</Link> (WIP)</li>
+              <li><Link to="/documents">Manage Documents</Link></li>
               <li><Link to="/investments">Track Investments</Link> (WIP)</li>
               <li><Link to="/photos">View Photos</Link> (WIP)</li>
               <li><Link to="/members">View Family Members</Link></li>
             </ul>
-
-            {/* --- Admin Specific Controls Placeholder --- */}
-            {userRole === 'admin' && (
-              <div style={{ border: '1px solid darkgreen', padding: '10px', marginTop: '10px', backgroundColor: '#e9f5e9' }}>
-                <h5>Admin Controls</h5>
-                <p>(Placeholders - links/buttons will need functionality)</p>
-                <button onClick={() => alert('TODO: Navigate to Add Member UI')}>Add Member</button>
-                <span style={{ marginLeft: '10px' }}></span>
-                <button onClick={() => alert('TODO: Navigate to Remove Member UI')}>Remove Member</button>
-              </div>
-            )}
           </div>
         ) : (
           // --- Scenario 2: User IS NOT in a family ---
