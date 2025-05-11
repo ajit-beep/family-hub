@@ -3,11 +3,11 @@ import axios from 'axios';
 import { authTokensRef } from '../context/AuthContext';
 
 // Use the backend base URL (adjust if needed, maybe use environment variables later)
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 5000, // Example timeout
+    timeout: 10000, // Example timeout
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
