@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import React from 'react'; // Make sure React is imported if not already
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './App.css'; // Or your main CSS file
