@@ -14,5 +14,4 @@ celery>=5.3,<5.4
 redis>=5.0,<5.1
 djangorestframework-simplejwt>=5.0,<6.0
 django-cors-headers>=3.0,<4.0
-gunicorn>=21.2,<22.0
 # Add other dependencies like djangorestframework-simplejwt (for auth), django-storages (for S3), etc. as needed

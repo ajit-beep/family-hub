@@ -1,68 +1,128 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* frontend/src/index.css */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* 
+  Import Tailwind CSS.
+  This single directive handles injecting Tailwind's base, components, utilities,
+  and processes your CSS-first configurations (like the @theme block below, or :root variables).
+*/
+@import "tailwindcss";
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/*
+  Define your custom theme values using CSS Custom Properties.
+  Tailwind CSS v4 is designed to pick these up.
+  You can define them in :root for global availability or within @theme for more direct Tailwind integration.
+  Using @theme is the more idiomatic v4 way to ensure Tailwind generates utilities from these.
+*/
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --border-radius-box: 0.5rem;
+  --border-radius-input: 0.375rem;
+  --border-radius-button: 0.375rem;
+
+  /* Color Palette */
+  /* You can define them as direct color values or reference other CSS vars if needed */
+  --color-brand-primary-light: #60a5fa;   /* blue-400 */
+  --color-brand-primary: #3b82f6;         /* blue-500 */
+  --color-brand-primary-dark: #2563eb;    /* blue-600 */
+
+  --color-brand-secondary-light: #fcd34d; /* amber-300 */
+  --color-brand-secondary: #f59e0b;       /* amber-500 */
+  --color-brand-secondary-dark: #d97706;  /* amber-600 */
+
+  --color-brand-accent-light: #fda4af;    /* rose-300 */
+  --color-brand-accent: #fb7185;          /* rose-400 */
+  --color-brand-accent-dark: #f43f5e;    /* rose-500 */
+
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+
+  --color-success-light: #34d399;
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+
+  --color-danger-light: #f87171;
+  --color-danger: #ef4444;
+  --color-danger-dark: #dc2626;
+
+  --color-warning-light: #fcd34d;
+  --color-warning: #f59e0b;
+  --color-warning-dark: #d97706;
+
+  /* Extend Tailwind's default theme directly or define new values */
+  /* This makes `bg-brand-primary`, `text-neutral-700` etc., directly available if named correctly */
+  /* The keys here should match how Tailwind expects them (e.g., 'colors', 'fontFamily', 'borderRadius') */
+  /* and the values are your CSS custom properties or direct values. */
+  /*
+    It's often cleaner to name your CSS variables with a prefix (like --color-)
+    and then map them within @theme if you want Tailwind to generate classes
+    like `bg-brand-primary` from `--color-brand-primary`.
+    Or, Tailwind v4 might infer this if CSS vars are named like `--tw-color-brand-primary`.
+
+    Let's assume for now that Tailwind v4 with `@tailwindcss/vite` will be smart enough to
+    make utilities from the CSS variables if you use them with arbitrary value syntax,
+    or if we later refine the `@theme` block to explicitly map them.
+    The simplest first step is to define the vars.
+  */
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Apply global base styles using your CSS variables */
+@layer base {
+  body {
+    background-color: var(--color-neutral-100);
+    color: var(--color-neutral-700);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  a:hover {
-    color: #747bff;
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600; /* Corresponds to font-semibold */
+    color: var(--color-neutral-800);
   }
-  button {
-    background-color: #f9f9f9;
+
+  h1 { font-size: 1.875rem; line-height: 2.25rem; margin-bottom: 1.5rem; } /* Tailwind text-3xl */
+  h2 { font-size: 1.5rem; line-height: 2rem; margin-bottom: 1rem; }       /* Tailwind text-2xl */
+  h3 { font-size: 1.25rem; line-height: 1.75rem; margin-bottom: 0.75rem; }/* Tailwind text-xl */
+  h4 { font-size: 1.125rem; line-height: 1.75rem; margin-bottom: 0.5rem; } /* Tailwind text-lg */
+
+  /* Optional: Custom scrollbar using your theme variables */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
+  ::-webkit-scrollbar-track {
+    background-color: var(--color-neutral-200);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--color-brand-primary) 70%, transparent); /* Example of using color-mix */
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-brand-primary);
+  }
+}
+
+/*
+  You can still use @layer components and @layer utilities
+  if you have custom component classes or utility classes to define.
+*/
+@layer components {
+  /* Example:
+  .btn {
+    @apply py-2 px-4 rounded-[var(--border-radius-button)];
+  }
+  .btn-primary {
+    @apply bg-[var(--color-brand-primary)] text-white hover:bg-[var(--color-brand-primary-dark)];
+  }
+  */
 }

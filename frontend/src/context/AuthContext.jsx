@@ -185,7 +185,19 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Render children only after initial loading check is done
-    return <AuthContext.Provider value={value}>{!isLoading && children}</AuthContext.Provider>;
+    //return <AuthContext.Provider value={value}>{!isLoading && children}</AuthContext.Provider>;
+    return (
+     <AuthContext.Provider value={value}>
+       {/* 
+         The children (your app) are only rendered if the AuthProvider's 
+         isLoading is false. This is usually for the *initial* auth check.
+         Ensure this logic doesn't inadvertently hide the login page itself 
+         if a login *attempt* fails.
+       */}
+       {/* Original line: {!isLoading && children} */}
+       {children} {/* Temporarily render children always to see if this is the issue, then we'll refine */}
+     </AuthContext.Provider>
+    );
 };
 
 // Custom hook (no changes needed here)

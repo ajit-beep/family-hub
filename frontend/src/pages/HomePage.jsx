@@ -1,86 +1,92 @@
 // frontend/src/pages/HomePage.jsx
 import React from 'react';
-import { useAuth } from '../context/AuthContext'; // Import useAuth hook
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import CreateFamilyComponent from '../components/CreateFamilyForm'; // Import the placeholder component
+import CreateFamilyForm from '../components/CreateFamilyForm';
+import Card, { CardContent, CardHeader } from '../components/ui/Card';
+// import { DocumentTextIcon, UserGroupIcon, PhotoIcon, ChartBarIcon } from '@heroicons/react/24/outline'; // Example icons
 
-// --- Main HomePage Component ---
 function HomePage() {
-  // 1. Get all relevant state directly from the updated AuthContext
-  const { isAuthenticated, user, familyId, userRole, isLoading } = useAuth();
+  const { isAuthenticated, user, familyId, userRole, isLoading: authLoading } = useAuth();
 
-  // 2. Handle the initial loading state provided by AuthContext
-  // This covers the time during initial token refresh and user data fetch
-  if (isLoading) {
+  if (authLoading) { // Covers initial token refresh and user data fetch
     return (
-      <div>
-        <h2>Home Page</h2>
-        <p>Loading application data...</p> {/* Or use a spinner component */}
+      <div className="flex justify-center items-center py-20">
+        <p className="text-lg text-[var(--color-neutral-500)]">Loading application data...</p>
+        {/* Consider a spinner component here */}
       </div>
     );
   }
 
-  // 3. Handle the case where the user is definitively not authenticated
-  if (!isAuthenticated) {
+  // Should be handled by ProtectedRoute, but as a fallback:
+  if (!isAuthenticated || !user) {
     return (
-      <div>
-        <h2>Home Page</h2>
-        <p>
-          Welcome to Family Hub! Please <Link to="/login">log in</Link> or <Link to="/register">register</Link> to continue.
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-semibold mb-4">Welcome to FamilyHub</h2>
+        <p className="text-[var(--color-neutral-600)]">
+          Please <Link to="/login" className="text-[var(--color-brand-primary)] hover:underline">log in</Link> or{' '}
+          <Link to="/register" className="text-[var(--color-brand-primary)] hover:underline">register</Link> to continue.
         </p>
       </div>
     );
   }
 
-  // 4. Handle the authenticated state
-  // We expect 'user' to exist if isAuthenticated is true, but add a fallback.
-  if (!user) {
-     console.warn("HomePage: Authenticated is true, but user data is missing. Loading...");
-     return (
-       <div>
-          <h2>Home Page</h2>
-          <p>Loading user information...</p>
-          {/* Might indicate an unexpected state, could add error display */}
-       </div>
-     );
-  }
-
-  // --- User is Authenticated and user data is available ---
+  // User is Authenticated
   return (
-    <div>
-      <h2>Home Page</h2>
-      <div>
-        {/* Display basic welcome and user info */}
-        <h3>Welcome back, {user.first_name || user.username}!</h3>
-        <p>Username: {user.username} | Email: {user.email}</p>
-        <p>Joined: {new Date(user.date_joined).toLocaleDateString()}</p>
+    <div className="space-y-8">
+      <Card el="section"> {/* Use semantic element */}
+        <CardContent>
+          <h2 className="text-3xl font-bold text-[var(--color-neutral-800)]">
+            Welcome back, {user.first_name || user.username}!
+          </h2>
+          <p className="text-[var(--color-neutral-600)] mt-1">
+            Here's what's happening in your FamilyHub.
+          </p>
+          {/* More general info could go here, e.g., date, quick stats if any */}
+        </CardContent>
+      </Card>
 
-        <hr style={{ margin: '20px 0' }}/>
-
-        {/* --- Conditional Section Based on Family Membership --- */}
-        {familyId ? (
-          // --- Scenario 1: User IS in a family ---
-          <div>
-            <h4>Your Family Hub (ID: {familyId})</h4>
-            <p>Your Role: <strong>{userRole}</strong></p>
-
-            <h5>Quick Access:</h5>
-            <ul>
-              {/* Replace with actual Links to components/routes */}
-              <li><Link to="/documents">Manage Documents</Link></li>
-              <li><Link to="/investments">Track Investments</Link> (WIP)</li>
-              <li><Link to="/photos">View Photos</Link> (WIP)</li>
-              <li><Link to="/members">View Family Members</Link></li>
-            </ul>
-          </div>
-        ) : (
-          // --- Scenario 2: User IS NOT in a family ---
-          <CreateFamilyComponent /> // Render the placeholder component/form
-        )}
-        {/* --- End Conditional Section --- */}
-
-      </div>
-      {/* Logout button is likely in a shared Nav component, not typically here */}
+      {familyId ? (
+        // --- User IS in a family ---
+        <Card el="section">
+          <CardHeader>
+            Your Family Hub Dashboard (ID: {familyId})
+          </CardHeader>
+          <CardContent>
+            <p className="mb-6 text-[var(--color-neutral-600)]">
+              Your role: <strong className="text-[var(--color-brand-primary)]">{userRole}</strong>
+            </p>
+            <h4 className="text-lg font-semibold mb-4 text-[var(--color-neutral-700)]">Quick Access:</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Quick Access Links as Cards/Styled Links */}
+              <Link to="/documents" className="block p-6 bg-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-200)] rounded-[var(--border-radius-box)] shadow transition-all hover:shadow-md">
+                {/* <DocumentTextIcon className="h-8 w-8 mb-2 text-[var(--color-brand-primary)]" /> */}
+                <h5 className="font-semibold text-[var(--color-neutral-700)]">Manage Documents</h5>
+                <p className="text-sm text-[var(--color-neutral-500)] mt-1">View, upload, and organize shared files.</p>
+              </Link>
+              <Link to="/members" className="block p-6 bg-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-200)] rounded-[var(--border-radius-box)] shadow transition-all hover:shadow-md">
+                {/* <UserGroupIcon className="h-8 w-8 mb-2 text-[var(--color-brand-primary)]" /> */}
+                <h5 className="font-semibold text-[var(--color-neutral-700)]">View Family Members</h5>
+                <p className="text-sm text-[var(--color-neutral-500)] mt-1">See who is in your family group.</p>
+              </Link>
+              {/* Example WIP Links */}
+              <div className="block p-6 bg-[var(--color-neutral-50)] rounded-[var(--border-radius-box)] shadow opacity-60 cursor-not-allowed">
+                {/* <ChartBarIcon className="h-8 w-8 mb-2 text-[var(--color-neutral-400)]" /> */}
+                <h5 className="font-semibold text-[var(--color-neutral-700)]">Track Investments (WIP)</h5>
+                <p className="text-sm text-[var(--color-neutral-500)] mt-1">Coming soon!</p>
+              </div>
+              <div className="block p-6 bg-[var(--color-neutral-50)] rounded-[var(--border-radius-box)] shadow opacity-60 cursor-not-allowed">
+                {/* <PhotoIcon className="h-8 w-8 mb-2 text-[var(--color-neutral-400)]" /> */}
+                <h5 className="font-semibold text-[var(--color-neutral-700)]">View Photos (WIP)</h5>
+                <p className="text-sm text-[var(--color-neutral-500)] mt-1">Coming soon!</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        // --- User IS NOT in a family ---
+        <CreateFamilyForm />
+      )}
     </div>
   );
 }

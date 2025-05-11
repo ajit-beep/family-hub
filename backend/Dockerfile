@@ -25,13 +25,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # the '.' refers to the build context define in the docker-compose.yml file
 COPY . /app
 
-COPY ./entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
 # Expose the port the app runs on
 EXPOSE 8000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Define entrypoint or default command if needed, often handled by docker-compose command
-# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"] # We'll override in docker-compose
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

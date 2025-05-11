@@ -20,5 +20,5 @@ COPY . .
 EXPOSE 5173
 
 # Command to run the app (Vite uses 'dev')
-CMD ["npm", "run", "dev", "--", "--host", "-d"] 
+CMD ["npm", "run", "dev", "--", "--host"] 
 # --host allows access from outside the container

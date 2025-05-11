@@ -4,11 +4,11 @@ import RegisterForm from '../components/RegisterForm';
 
 function RegisterPage() {
   return (
-    <div>
-      <h2>Register</h2>
-      {/* We'll add the actual form component here */}
-      <p>(Registration form will go here)</p>
-      <RegisterForm />{}
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-theme(space.16))] py-12">
+         {/* Adjusted min-height if your navbar is sticky (h-16 or 4rem) */}
+        <div className="w-full px-4">
+             <RegisterForm />
+        </div>
     </div>
   );
 }
