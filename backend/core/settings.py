@@ -12,22 +12,39 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-
+import os # Import os
+import dj_database_url # Import dj_database_url
+from dotenv import load_dotenv # Import python-dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# --- Load .env file ---
+# This loads variables from the .env file in the PROJECT ROOT directory
+# (where docker-compose.yml and your .env file are)
+# In Azure, environment variables will be set in the App Service configuration directly.
+dotenv_path = BASE_DIR.parent / '.env' # Assumes .env is in the project root
+
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+else:
+    print(f"Warning: .env file not found at {dotenv_path}. Relying on system environment variables.")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s0#qwg-b^obn^7epw8-_c*cq8zr$8crt^o7=#9h7#vx2msd5l6'
+# --- Security Settings ---
+# SECRET_KEY: Load from environment variable, with a (less secure) default for local if not set
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-fallback-key-for-dev-only')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+# DEBUG: Load from environment variable, defaulting to False for production
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
+
+# ALLOWED_HOSTS: Load from environment variable (space-separated string)
+# Example for .env: DJANGO_ALLOWED_HOSTS="localhost 127.0.0.1 myapp.azurewebsites.net"
+ALLOWED_HOSTS_STRING = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1')
+ALLOWED_HOSTS = ALLOWED_HOSTS_STRING.split(' ')
 
 
 # Application definition
@@ -38,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic', # For serving static files with Whitenoise in dev if needed
     'django.contrib.staticfiles',
 
     # Third-party apps
@@ -53,6 +71,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Whitenoise middleware, after SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware', # CORS middleware
     'django.middleware.common.CommonMiddleware',
@@ -63,6 +82,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
+WSGI_APPLICATION = 'core.wsgi.application'
 
 TEMPLATES = [
     {
@@ -80,18 +100,41 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
 
+# --- Database ---
+# Uses dj_database_url to parse the DATABASE_URL from the environment.
+# Your .env file should define DATABASE_URL like:
+# DATABASE_URL=postgres://familyhub_user:Test@425@db:5432/familyhub_db
+# (where 'db' is your Docker service name, or localhost if running outside Docker for dev)
+# For Azure, it will be the connection string provided by Azure Database for PostgreSQL.
+
+# Construct default DATABASE_URL from your SQL_* .env variables for Docker-compose setup
+default_db_url = (
+    f"postgres://{os.environ.get('SQL_USER', 'default_user')}"
+    f":{os.environ.get('SQL_PASSWORD', 'default_password')}"
+    f"@{os.environ.get('SQL_HOST', 'localhost')}"
+    f":{os.environ.get('SQL_PORT', '5432')}"
+    f"/{os.environ.get('SQL_DATABASE', 'default_db')}"
+)
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', default_db_url), # Use DATABASE_URL if set, else construct from SQL_*
+        conn_max_age=600,
+        # SSL will be required for Azure Database for PostgreSQL
+        ssl_require=os.environ.get('DJANGO_DB_SSL_REQUIRE', 'False').lower() == 'true'
+    )
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -112,32 +155,44 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8081", # React frontend
-    # Add other origins if needed (e.g., production frontend URL later)
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:8081", # React frontend
+#     # Add other origins if needed (e.g., production frontend URL later)
+# ]
+# CORS_ALLOW_CREDENTIALS = True # Allow cookies to be sent with CORS requests
+
+# --- CORS Settings ---
+# Load from environment variable (comma-separated string)
+# Example for .env: DJANGO_CORS_ALLOWED_ORIGINS="http://localhost:8081,https://myfrontend.azurestaticapps.net"
+CORS_ALLOWED_ORIGINS_STRING = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', 'http://localhost:8081') # Default to local React dev server
+CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS_STRING.split(',')
 CORS_ALLOW_CREDENTIALS = True # Allow cookies to be sent with CORS requests
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+# Directory where `collectstatic` will gather static files for deployment
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static') # Azure App Service often expects this in a subfolder
+# To ensure Whitenoise can find your app's static files during development too
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"), # If you have a project-level static folder
+]
+# For production, Whitenoise serves static files.
+# Use a more robust storage backend that handles compression and unique naming.
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Define where user-uploaded files (Media) will be stored and accessed
 MEDIA_URL = '/media/' # URL prefix for media files
-MEDIA_ROOT = BASE_DIR / 'media' # Absolute filesystem path to the directory for media files
-                                # BASE_DIR should already be defined near top of settings.py
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles') # Can also be outside BASE_DIR
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -200,3 +255,57 @@ SIMPLE_JWT = {
     #"TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer", # Default
     #"TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer", # Default
 }
+
+# --- Redis Cache (Optional, but good for performance) ---
+# You have REDIS_HOST in .env. Construct REDIS_URL
+REDIS_URL_DEFAULT = f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', '6379')}/0"
+REDIS_URL = os.environ.get('REDIS_URL', REDIS_URL_DEFAULT)
+
+# Only configure Redis if django-redis is installed and REDIS_URL is available
+if 'django_redis' in INSTALLED_APPS and REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                # Add password if your Redis requires it (from REDIS_URL or separate env var)
+            }
+        }
+    }
+
+# --- Logging (Example - Customize as needed for Azure) ---
+# In Azure App Service, logs are often captured automatically, but you can configure more.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO', # Django's default is WARNING. INFO can be useful. DEBUG in local.
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'), # Control Django's own log level
+            'propagate': False,
+        },
+    },
+}
+
+# --- Production Security Enhancements (Uncomment and configure if ready for HTTPS on Azure) ---
+# Ensure you have HTTPS setup before enabling these forcefully.
+# Azure App Service provides HTTPS by default on *.azurewebsites.net.
+# If not DEBUG: # Apply these only in production
+#     CSRF_COOKIE_SECURE = True
+#     SESSION_COOKIE_SECURE = True
+#     SECURE_BROWSER_XSS_FILTER = True
+#     SECURE_CONTENT_TYPE_NOSNIFF = True
+#     SECURE_HSTS_SECONDS = 31536000  # 1 year. Start with a small value like 3600 for testing.
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#     SECURE_HSTS_PRELOAD = True # Only if you understand the implications and are ready to submit.
+#     SECURE_SSL_REDIRECT = True # Redirect all HTTP to HTTPS

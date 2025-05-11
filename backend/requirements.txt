@@ -15,3 +15,11 @@ redis>=5.0,<5.1
 djangorestframework-simplejwt>=5.0,<6.0
 django-cors-headers>=3.0,<4.0
 # Add other dependencies like djangorestframework-simplejwt (for auth), django-storages (for S3), etc. as needed
+# For Production & Azure
+gunicorn
+psycopg2-binary  # For PostgreSQL
+python-dotenv    # To load .env file locally
+dj-database-url  # To parse DATABASE_URL environment variable
+django-redis     # If using Redis for caching/sessions (you have REDIS_HOST in .env)
+whitenoise       # For serving static files (like Django Admin) if needed
+# django-storages  # (Optional - if you plan to use Azure Blob Storage for media files later)

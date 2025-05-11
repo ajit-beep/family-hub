@@ -1,6 +1,9 @@
 # Environment variables
 .env
 
+# Django static files build output
+**/staticfiles_build/
+**/mediafiles/ # If media is stored locally and you don't want to commit them
 # Docker cache / build artifacts (if any locally)
 **/__pycache__/
 *.pyc

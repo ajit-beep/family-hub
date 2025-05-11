@@ -195,7 +195,7 @@ export const AuthProvider = ({ children }) => {
          if a login *attempt* fails.
        */}
        {/* Original line: {!isLoading && children} */}
-       {children} {/* Temporarily render children always to see if this is the issue, then we'll refine */}
+       {!isLoading && children} {/* Temporarily render children always to see if this is the issue, then we'll refine */}
      </AuthContext.Provider>
     );
 };
