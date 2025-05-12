@@ -1,6 +1,6 @@
 // frontend/src/components/RegisterForm.jsx
 import React, { useState } from 'react';
-import axios from 'axios'; // Keep using plain axios for this one if not converted yet
+import axiosInstance from '../api/axiosInstance';
 import { Link } from 'react-router-dom'; // For login link
 import Button from './ui/Button';
 import Input from './ui/Input';
@@ -36,8 +36,9 @@ function RegisterForm() {
         try {
             // Using the environment variable for the API URL would be best practice here
             // For now, assuming VITE_API_URL is set or using localhost
-            const apiUrl = import.meta.env.VITE_API_URL || 'https://familyhub-backend-prod-hucaffcwdzdparh9.centralus-01.azurewebsites.net/api';
-            await axios.post(`${apiUrl.replace('/api', '')}/api/users/register/`, payload); // Ensure correct base
+            //const apiUrl = import.meta.env.VITE_API_URL || 'https://familyhub-backend-prod-hucaffcwdzdparh9.centralus-01.azurewebsites.net/api';
+            //await axios.post(`${apiUrl.replace('/api', '')}/api/users/register/`, payload); // Ensure correct base
+            await axiosInstance.post('/api/users/register/', payload);
             setSuccess('Registration successful! You can now log in.');
             // Clear form fields:
             // setUsername(''); setEmail(''); setPassword(''); setPassword2(''); setFirstName(''); setLastName('');

@@ -94,7 +94,9 @@ export const AuthProvider = ({ children }) => {
     
             try {
                 console.log("Calling POST /api/token/refresh/");
-                const response = await axiosInstance.post('/api/token/refresh/');
+                const urlToRefresh = '/api/token/refresh/'; // The relative path
+                console.log(`AuthContext: Attempting refresh POST to: ${axiosInstance.defaults.baseURL}${urlToRefresh}`);
+                const response = await axiosInstance.post(urlToRefresh);
     
                 // Only update state if the component is still mounted
                 handleNewAccessToken(response.data.access);

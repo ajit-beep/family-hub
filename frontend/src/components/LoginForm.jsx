@@ -1,7 +1,7 @@
 // frontend/src/components/LoginForm.jsx
 import React, { useState } from 'react';
 import axiosInstance from '../api/axiosInstance'; // <-- Import the configured instance
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from './ui/Button'; // Use our styled Button
 import Input from './ui/Input';   // Use our styled Input
@@ -90,9 +90,9 @@ function LoginForm() {
       <CardFooter className="text-center">
         <p className="text-sm text-[var(--color-neutral-600)]">
           Don't have an account?{' '}
-          <a href="/register" className="font-medium text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary-dark)]">
+          <Link to="/register" className="font-medium text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary-dark)]">
             Sign up
-          </a>
+          </Link>
         </p>
       </CardFooter>
     </Card>
