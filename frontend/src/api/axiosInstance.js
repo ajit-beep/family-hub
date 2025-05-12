@@ -3,7 +3,13 @@ import axios from 'axios';
 import { authTokensRef } from '../context/AuthContext';
 
 // Use the backend base URL (adjust if needed, maybe use environment variables later)
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://familyhub-backend-prod-hucaffcwdzdparh9.centralus-01.azurewebsites.net';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://familyhub-backend-prod-hucaffcwdzdparh9.centralus-01.azurewebsites.net/api';
+
+if (!API_BASE_URL) {
+   console.error("CRITICAL: VITE_API_URL is not defined!");
+ } else {
+   console.log("Using API_BASE_URL:", API_BASE_URL); // Add log to check
+ }
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
