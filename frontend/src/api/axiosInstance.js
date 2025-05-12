@@ -3,7 +3,7 @@ import axios from 'axios';
 import { authTokensRef } from '../context/AuthContext';
 
 // Use the backend base URL (adjust if needed, maybe use environment variables later)
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://familyhub-backend-prod-hucaffcwdzdparh9.centralus-01.azurewebsites.net';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,

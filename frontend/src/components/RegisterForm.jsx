@@ -36,7 +36,7 @@ function RegisterForm() {
         try {
             // Using the environment variable for the API URL would be best practice here
             // For now, assuming VITE_API_URL is set or using localhost
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://familyhub-backend-prod-hucaffcwdzdparh9.centralus-01.azurewebsites.net/api';
             await axios.post(`${apiUrl.replace('/api', '')}/api/users/register/`, payload); // Ensure correct base
             setSuccess('Registration successful! You can now log in.');
             // Clear form fields:
